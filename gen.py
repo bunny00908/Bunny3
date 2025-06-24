@@ -17,7 +17,7 @@ def handle_gen(bot, message):
             msg = "<b>Generated Cards</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"
             msg += "\n".join([f"<code>{c}</code>" for c in cards])
             msg += f"\n━━━━━━━━━━━━━━━━━━━━━━\nTotal: <b>{len(cards)}</b>\n"
-            msg += "Bot By: 𝗕𝗨𝗡𝗡𝗬 <a href='https://t.me/bunny2050'>@bunny2050</a>"
+            msg += "Bot By: 𝗕𝗨𝗡𝗡𝗬 <a href='https://t.me/bunny2050'>@bunny2050</a>"🔔
         else:
             msg = "❌ No cards generated. Invalid BIN or server error."
     except Exception as e:
