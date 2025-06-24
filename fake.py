@@ -21,7 +21,7 @@ def handle_fake(bot, message):
                 f"<b>Phone:</b> {user['phone']}\n"
                 f"<b>DOB:</b> {user['dob']['date'][:10]}\n"
                 "━━━━━━━━━━━━━━━━━━━━━━\n"
-                "Bot By: 𝗕𝗨𝗡𝗡𝗬 <a href='https://t.me/bunny2050'>@bunny2050</a>"
+                "Bot By: 𝗕𝗨𝗡𝗡𝗬 <a href='https://t.me/bunny2050'>@bunny2050</a>"🔔
             )
         else:
             msg = "❌ Could not fetch fake identity. Try a different country code."
