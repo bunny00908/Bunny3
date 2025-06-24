@@ -4,7 +4,7 @@ import config
 bot = telebot.TeleBot(config.BOT_TOKEN)
 
 from ui import setup_ui_handlers
-import chk
+import b3   # Use b3.py handlers for new commands
 import gen
 import bin as bin_lookup
 import fake
@@ -20,16 +20,30 @@ setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized)
 
 # --- Main command handlers ---
 
-@bot.message_handler(commands=['chk'])
-def handle_chk_command(message):
-    chk.handle_chk(bot, message)
+# Remove old /chk and /mchk handlers
+# @bot.message_handler(commands=['chk'])
+# def handle_chk_command(message):
+#     chk.handle_chk(bot, message)
 
-@bot.message_handler(commands=['mchk'])
-def handle_mchk_command(message):
-    chk.handle_mchk(bot, message)
+# @bot.message_handler(commands=['mchk'])
+# def handle_mchk_command(message):
+#     chk.handle_mchk(bot, message)
 
+# Add new /b3 and /mb3 handlers with new UI
+@bot.message_handler(commands=['b3'])
+def handle_b3_command(message):
+    b3.handle_b3(bot, message)
+
+@bot.message_handler(commands=['mb3'])
+def handle_mb3_command(message):
+    b3.handle_mb3(bot, message)
+
+# Keep /chktxt if you want file card checking (using chk.py or adapt to b3)
 @bot.message_handler(commands=['chktxt'], content_types=['document'])
 def handle_chktxt_command(message):
+    # Use chk or b3 handler depending on your implementation
+    # For now, keeping chk's handler for file input
+    import chk
     chk.handle_chktxt(bot, message)
 
 @bot.message_handler(commands=['gen'])
