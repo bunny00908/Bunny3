@@ -9,7 +9,7 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
         username = msg.from_user.username
         display = username if username else user_name
 
-        text = (
+        caption = (
             "<b>[⌬] BUNNY | Version - 1</b>\n"
             "━━━━━━━━━━━━━\n"
             f"Hello, <b>{display}</b>\n"
@@ -25,13 +25,18 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
         )
         kb.add(InlineKeyboardButton("Close", callback_data="close"))
 
-        bot.send_message(
-            msg.chat.id,
-            text,
-            parse_mode="HTML",
-            reply_markup=kb,
-            disable_web_page_preview=True
-        )
+        # Send anime image with caption replying to /start command message
+        # Replace 'anime_start.jpg' with your actual image path on the server
+        with open('anime_start.jpg', 'rb') as photo:
+            bot.send_photo(
+                msg.chat.id,
+                photo,
+                caption=caption,
+                parse_mode="HTML",
+                reply_markup=kb,
+                reply_to_message_id=msg.message_id,
+                disable_notification=False
+            )
 
     @bot.callback_query_handler(func=lambda call: call.data == "register")
     def handle_register(call):
@@ -119,19 +124,6 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
             disable_web_page_preview=True
         )
 
-    @bot.callback_query_handler(func=lambda call: call.data == "gate_next")
-    def handle_gate_next_menu(call):
-        text = (
-            "More gates coming soon... 🚧"
-        )
-        kb = InlineKeyboardMarkup()
-        kb.add(InlineKeyboardButton("Back", callback_data="gate"))
-        bot.edit_message_text(
-            text, call.message.chat.id, call.message.message_id,
-            parse_mode="HTML", reply_markup=kb,
-            disable_web_page_preview=True
-        )
-
     @bot.callback_query_handler(func=lambda call: call.data == "tools")
     def handle_tools_menu(call):
         text = (
@@ -159,36 +151,6 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
             InlineKeyboardButton("Back", callback_data="command"),
             InlineKeyboardButton("Next", callback_data="tools_next")
         )
-        bot.edit_message_text(
-            text, call.message.chat.id, call.message.message_id,
-            parse_mode="HTML", reply_markup=kb,
-            disable_web_page_preview=True
-        )
-
-    @bot.callback_query_handler(func=lambda call: call.data == "tools_next")
-    def handle_tools_next_menu(call):
-        text = (
-            "BUNNY [TOOLS - PAGE 2]\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "【✦】Name: Image Generator\n"
-            "【✦】Command: <code>/img prompt</code>\n"
-            "【✦】Status: <b>Active ✅</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "【✦】Name: URL Gateway Finder\n"
-            "【✦】Command: <code>/url</code>\n"
-            "【✦】Status: <b>Active ✅</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "【✦】Name: CC Filter\n"
-            "【✦】Command: <code>/fl [in reply to txt]</code>\n"
-            "【✦】Status: <b>Active ✅</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "【✦】Name: Bot Status\n"
-            "【✦】Command: <code>/status</code>\n"
-            "【✦】Status: <b>Active ✅</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━━━"
-        )
-        kb = InlineKeyboardMarkup()
-        kb.add(InlineKeyboardButton("Back", callback_data="tools"))
         bot.edit_message_text(
             text, call.message.chat.id, call.message.message_id,
             parse_mode="HTML", reply_markup=kb,
