@@ -1,4 +1,4 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton 
 
 def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
 
@@ -25,18 +25,15 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
         )
         kb.add(InlineKeyboardButton("Close", callback_data="close"))
 
-        # Send anime image with caption replying to /start command message
-        # Replace 'anime_start.jpg' with your actual image path on the server
-        with open('anime_start.jpg', 'rb') as photo:
-            bot.send_photo(
-                msg.chat.id,
-                photo,
-                caption=caption,
-                parse_mode="HTML",
-                reply_markup=kb,
-                reply_to_message_id=msg.message_id,
-                disable_notification=False
-            )
+        # Send text message with inline buttons (no photo)
+        bot.send_message(
+            msg.chat.id,
+            caption,
+            parse_mode="HTML",
+            reply_markup=kb,
+            reply_to_message_id=msg.message_id,
+            disable_notification=False
+        )
 
     @bot.callback_query_handler(func=lambda call: call.data == "register")
     def handle_register(call):
