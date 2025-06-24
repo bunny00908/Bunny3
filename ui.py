@@ -1,4 +1,4 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton 
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
 
@@ -25,15 +25,16 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
         )
         kb.add(InlineKeyboardButton("Close", callback_data="close"))
 
-        # Send text message with inline buttons (no photo)
-        bot.send_message(
-            msg.chat.id,
-            caption,
-            parse_mode="HTML",
-            reply_markup=kb,
-            reply_to_message_id=msg.message_id,
-            disable_notification=False
-        )
+        with open('anime_start.jpg', 'rb') as photo:
+            bot.send_photo(
+                msg.chat.id,
+                photo,
+                caption=caption,
+                parse_mode="HTML",
+                reply_markup=kb,
+                reply_to_message_id=msg.message_id,
+                disable_notification=False
+            )
 
     @bot.callback_query_handler(func=lambda call: call.data == "register")
     def handle_register(call):
@@ -93,8 +94,8 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "【✦】Name: Braintree Auth\n"
             "【✦】Commands:\n"
-            " • <code>/B3 cc|mm|yy|cvv</code> — Single check\n"
-            " • <code>/mb3</code> — Mass check (max 20 cards)\n"
+            "【✦】<code>/b3 cc|mm|yy|cvv</code> — Single check\n"
+            "【✦】<code>/mb3</code> — Mass check (max 20 cards)\n"
             "【✦】Status: <b>Active ✅</b>\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "【✦】Name: Stripe Auth 1$\n"
@@ -129,6 +130,7 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
             "【✦】Name: CC Scrapper\n"
             "【✦】Command: <code>$scr channel_username 100</code>\n"
             "【✦】Limit: 5k\n"
+            "【✦】Status: <b>Active ✅</b>\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "【✦】Name: Bin Info\n"
             "【✦】Command: <code>/bin bin/cc</code>\n"
@@ -154,12 +156,44 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
             disable_web_page_preview=True
         )
 
+    @bot.callback_query_handler(func=lambda call: call.data == "tools_next")
+    def handle_tools_next_menu(call):
+        text = (
+            "BUNNY [TOOLS - PAGE 2]\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "【✦】Name: Image Generator\n"
+            "【✦】Command: <code>/img [prompt]</code>\n"
+            "【✦】Status: <b>Active ✅</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "【✦】Name: Gateway Fider\n"
+            "【✦】Command: <code>/url</code>\n"
+            "【✦】Status: <b>Active ✅</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "【✦】Name: CC Filter\n"
+            "【✦】Command: <code>/fl</code>\n"
+            "【✦】Status: <b>Active ✅</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━"
+        )
+        kb = InlineKeyboardMarkup(row_width=2)
+        kb.add(
+            InlineKeyboardButton("Back", callback_data="tools"),
+            InlineKeyboardButton("Close", callback_data="close")
+        )
+        bot.edit_message_text(
+            text,
+            call.message.chat.id,
+            call.message.message_id,
+            parse_mode="HTML",
+            reply_markup=kb,
+            disable_web_page_preview=True
+        )
+
     @bot.callback_query_handler(func=lambda call: call.data == "terms")
     def handle_terms_menu(call):
         text = (
             "BUNNY [TERMS]\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "Your terms and conditions go here.\n"
+            "⚠️ Disclaimer: The information shared is sourced solely from public domains. We do not collect, store, or distribute any private or sensitive data.\n"
             "━━━━━━━━━━━━━━━━━━━━━━"
         )
         kb = InlineKeyboardMarkup()
