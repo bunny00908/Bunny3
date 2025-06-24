@@ -1,12 +1,9 @@
+# chk.py
 import threading
-import time
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from p import check_card  # your card check function
+from p import check_card, parse_check_card_result
 
-# Rate limit dictionaries
-last_mb3_check_time = {}
-last_b3_check_time = {}
-
+# B3 UI Formatter
 def format_card_check_result(
     card, gateway, status_key, response, bank, country_flag,
     card_type, bin_code, check_time, checked_by, dev_link="https://t.me/bunny2050"
@@ -18,7 +15,6 @@ def format_card_check_result(
         "3d_issue": ("𝟯𝗗 𝗦𝗘𝗖𝗨𝗥𝗜𝗧𝗬 𝗜𝗦𝗦𝗨𝗘", "🔒"),
     }
     status_text, status_emoji = status_map.get(status_key.lower(), ("𝗨𝗡𝗞𝗡𝗢𝗪𝗡", "❓"))
-
     message = (
         f"🔍 𝗕𝗿𝗮𝗶𝗻𝘁𝗿𝗲𝗲 𝗔𝘂𝘁𝗵\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -39,69 +35,37 @@ def format_card_check_result(
     )
     return message
 
+# /b3 Handler (Single Card)
 def handle_b3(bot, message):
-    user_id = message.from_user.id
-    now = time.time()
-    last_time = last_b3_check_time.get(user_id, 0)
-    if now - last_time < 30:
-        remaining = int(30 - (now - last_time))
-        bot.reply_to(message, f"⏳ Please wait {remaining} seconds before starting another single check.")
-        return
-    last_b3_check_time[user_id] = now
-
     args = message.text.split(None, 1)
     if len(args) < 2 or "|" not in args[1]:
-        bot.reply_to(message, "❌ Send as: <code>/B3 4556737586899855|12|2026|123</code>", parse_mode="HTML")
+        bot.reply_to(message, "❌ Send as: <code>/b3 4556737586899855|12|2026|123</code>", parse_mode="HTML")
         return
-
     card_line = args[1].strip()
     if card_line.count('|') != 3 or "\n" in card_line:
-        bot.reply_to(message, "❌ Only ONE card per /B3 command.")
+        bot.reply_to(message, "❌ Only ONE card per /b3.")
         return
 
-    reply_msg = bot.reply_to(message, "🔄 <b>Processing your B3 check...</b>", parse_mode="HTML")
+    reply_msg = bot.reply_to(message, "🔄 <b>Processing B3 check...</b>", parse_mode="HTML")
 
     def check_and_reply():
         try:
             result = check_card(card_line)
-            card = card_line
-            gateway = "𝗕𝗿𝗮𝗶𝗻𝘁𝗿𝗲𝗲 𝗔𝘂𝘁𝗵"
-            status_key = "approved" if "APPROVED" in result else "declined"
-            response = "Your card was approved" if status_key == "approved" else "Your card was declined"
-            bank = "Unknown Bank"
-            country_flag = "🏳️"
-            card_type = "Unknown Card Type"
-            bin_code = card_line.split('|')[0][:6]
-            check_time = "💨"
-            checked_by = message.from_user.first_name or message.from_user.username or "User"
-
+            info = parse_check_card_result(result, default_card=card_line)
+            checked_by = message.from_user.first_name or (message.from_user.username if message.from_user else "User")
             formatted_msg = format_card_check_result(
-                card, gateway, status_key, response, bank, country_flag,
-                card_type, bin_code, check_time, checked_by
+                info['card'], info['gateway'], info['status_key'], info['response'],
+                info['bank'], info['country_flag'], info['card_type'],
+                info['bin_code'], info['check_time'], checked_by
             )
-
-            bot.edit_message_text(
-                formatted_msg,
-                message.chat.id,
-                reply_msg.message_id,
-                parse_mode="HTML",
-                disable_web_page_preview=True
-            )
+            bot.edit_message_text(formatted_msg, message.chat.id, reply_msg.message_id,
+                                  parse_mode="HTML", disable_web_page_preview=True)
         except Exception as e:
             bot.edit_message_text(f"❌ Error: {e}", message.chat.id, reply_msg.message_id)
-
     threading.Thread(target=check_and_reply).start()
 
+# /mb3 Handler (Mass Cards)
 def handle_mb3(bot, message):
-    user_id = message.from_user.id
-    now = time.time()
-    last_time = last_mb3_check_time.get(user_id, 0)
-    if now - last_time < 30:
-        remaining = int(30 - (now - last_time))
-        bot.reply_to(message, f"⏳ Please wait {remaining} seconds before starting another mass check.")
-        return
-    last_mb3_check_time[user_id] = now
-
     cards_text = ""
     if message.reply_to_message and message.reply_to_message.text:
         cards_text = message.reply_to_message.text
@@ -130,7 +94,6 @@ def handle_mb3(bot, message):
         InlineKeyboardButton(f"TOTAL CHECKED {checked}", callback_data="none"),
         InlineKeyboardButton(f"TOTAL {total} ✅", callback_data="none"),
     )
-
     status_msg = bot.reply_to(message, "━━━━━━━━━━━━━━━━━━━━━━", reply_markup=status_markup)
 
     def mass_check():
@@ -138,32 +101,20 @@ def handle_mb3(bot, message):
         for card in card_lines:
             try:
                 result = check_card(card)
-                card_number = card
-                gateway = "𝗕𝗿𝗮𝗶𝗻𝘁𝗿𝗲𝗲 𝗔𝘂𝘁𝗵"
-                status_key = "approved" if "APPROVED" in result else "declined"
-                response = "Your card was approved" if status_key == "approved" else "Your card was declined"
-                bank = "Unknown Bank"
-                country_flag = "🏳️"
-                card_type = "Unknown Card Type"
-                bin_code = card[:6]
-                check_time = "💨"
-                checked_by = message.from_user.first_name or message.from_user.username or "User"
-
+                info = parse_check_card_result(result, default_card=card)
+                checked_by = message.from_user.first_name or (message.from_user.username if message.from_user else "User")
                 formatted_msg = format_card_check_result(
-                    card_number, gateway, status_key, response,
-                    bank, country_flag, card_type,
-                    bin_code, check_time, checked_by
+                    info['card'], info['gateway'], info['status_key'], info['response'],
+                    info['bank'], info['country_flag'], info['card_type'],
+                    info['bin_code'], info['check_time'], checked_by
                 )
-
-                if status_key == "approved":
+                bot.reply_to(message, formatted_msg, parse_mode="HTML", disable_web_page_preview=True)
+                if info['status_key'] == "approved":
                     approved += 1
-                    bot.reply_to(message, formatted_msg, parse_mode="HTML", disable_web_page_preview=True)
                 else:
                     declined += 1
-
                 checked += 1
 
-                # Update status buttons live
                 status_markup = InlineKeyboardMarkup(row_width=1)
                 status_markup.add(
                     InlineKeyboardButton(f"APPROVED {approved} 🔥", callback_data="none"),
@@ -175,12 +126,9 @@ def handle_mb3(bot, message):
                     bot.edit_message_reply_markup(status_msg.chat.id, status_msg.message_id, reply_markup=status_markup)
                 except Exception:
                     pass
-
             except Exception:
                 declined += 1
                 checked += 1
-
-        # Final status update
         status_markup = InlineKeyboardMarkup(row_width=1)
         status_markup.add(
             InlineKeyboardButton(f"APPROVED {approved} 🔥", callback_data="none"),
@@ -194,3 +142,12 @@ def handle_mb3(bot, message):
             pass
 
     threading.Thread(target=mass_check).start()
+
+# Bot command registration (Add this where your TeleBot is created and configured)
+# Example:
+# import telebot
+# bot = telebot.TeleBot('YOUR_TOKEN')
+# 
+# # Add handlers:
+# bot.message_handler(commands=['b3'])(lambda message: handle_b3(bot, message))
+# bot.message_handler(commands=['mb3'])(lambda message: handle_mb3(bot, message))
