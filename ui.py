@@ -87,23 +87,45 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
     @bot.callback_query_handler(func=lambda call: call.data == "gate")
     def handle_gate_menu(call):
         text = (
-            "BUNNY [AUTH GATES]\n"
+            "BUNNY [ALL GATES]\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "【✦】Name: Braintree Auth\n"
-            "【✦】Command: <code>/chk cc|mm|yy|cvv</code>\n"
+            "【✦】Commands:\n"
+            " • <code>/B3 cc|mm|yy|cvv</code> — Single check\n"
+            " • <code>/mb3</code> — Mass check (max 20 cards)\n"
+            "【✦】Status: <b>Active ✅</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "【✦】Name: Stripe Auth 1$\n"
+            "【✦】Command: <code>/stripe1</code>\n"
             "【✦】Status: <b>Active ✅</b>\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "【✦】Name: Stripe Auth\n"
-            "【✦】Command: <i>Coming Soon</i>\n"
-            "【✦】Status: <b>Coming Soon 🚧</b>\n"
+            "【✦】Command: <code>/stripe</code>\n"
+            "【✦】Status: <b>Off ❌</b>\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "【✦】Name: Shopify $1 Auth\n"
-            "【✦】Command: <i>Coming Soon</i>\n"
-            "【✦】Status: <b>Coming Soon 🚧</b>\n"
+            "【✦】Command: <code>/shopify1</code>\n"
+            "【✦】Status: <b>Off ❌</b>\n"
             "━━━━━━━━━━━━━━━━━━━━━━"
         )
+        kb = InlineKeyboardMarkup(row_width=2)
+        kb.add(
+            InlineKeyboardButton("Back", callback_data="command"),
+            InlineKeyboardButton("Next", callback_data="gate_next")
+        )
+        bot.edit_message_text(
+            text, call.message.chat.id, call.message.message_id,
+            parse_mode="HTML", reply_markup=kb,
+            disable_web_page_preview=True
+        )
+
+    @bot.callback_query_handler(func=lambda call: call.data == "gate_next")
+    def handle_gate_next_menu(call):
+        text = (
+            "More gates coming soon... 🚧"
+        )
         kb = InlineKeyboardMarkup()
-        kb.add(InlineKeyboardButton("Back", callback_data="command"))
+        kb.add(InlineKeyboardButton("Back", callback_data="gate"))
         bot.edit_message_text(
             text, call.message.chat.id, call.message.message_id,
             parse_mode="HTML", reply_markup=kb,
@@ -114,6 +136,10 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
     def handle_tools_menu(call):
         text = (
             "BUNNY [TOOLS]\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "【✦】Name: CC Scrapper\n"
+            "【✦】Command: <code>$scr channel_username 100</code>\n"
+            "【✦】Limit: 5k\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "【✦】Name: Bin Info\n"
             "【✦】Command: <code>/bin bin/cc</code>\n"
@@ -128,8 +154,41 @@ def setup_ui_handlers(bot, AUTHORIZED_USERS, save_auth, is_authorized):
             "【✦】Status: <b>Active ✅</b>\n"
             "━━━━━━━━━━━━━━━━━━━━━━"
         )
+        kb = InlineKeyboardMarkup(row_width=2)
+        kb.add(
+            InlineKeyboardButton("Back", callback_data="command"),
+            InlineKeyboardButton("Next", callback_data="tools_next")
+        )
+        bot.edit_message_text(
+            text, call.message.chat.id, call.message.message_id,
+            parse_mode="HTML", reply_markup=kb,
+            disable_web_page_preview=True
+        )
+
+    @bot.callback_query_handler(func=lambda call: call.data == "tools_next")
+    def handle_tools_next_menu(call):
+        text = (
+            "BUNNY [TOOLS - PAGE 2]\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "【✦】Name: Image Generator\n"
+            "【✦】Command: <code>/img prompt</code>\n"
+            "【✦】Status: <b>Active ✅</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "【✦】Name: URL Gateway Finder\n"
+            "【✦】Command: <code>/url</code>\n"
+            "【✦】Status: <b>Active ✅</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "【✦】Name: CC Filter\n"
+            "【✦】Command: <code>/fl [in reply to txt]</code>\n"
+            "【✦】Status: <b>Active ✅</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "【✦】Name: Bot Status\n"
+            "【✦】Command: <code>/status</code>\n"
+            "【✦】Status: <b>Active ✅</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━"
+        )
         kb = InlineKeyboardMarkup()
-        kb.add(InlineKeyboardButton("Back", callback_data="command"))
+        kb.add(InlineKeyboardButton("Back", callback_data="tools"))
         bot.edit_message_text(
             text, call.message.chat.id, call.message.message_id,
             parse_mode="HTML", reply_markup=kb,
