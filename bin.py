@@ -20,7 +20,7 @@ def handle_bin(bot, message):
                 f"<b>Bank:</b> {data.get('bank', 'UNKNOWN')}\n"
                 f"<b>Country:</b> {data.get('country', 'UNKNOWN')} {data.get('countryInfo', {}).get('emoji', '')}\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                "Bot By: 𝗕𝗨𝗡𝗡𝗬 <a href='https://t.me/bunny2050'>@bunny2050</a>"
+                "Bot By: 𝗕𝗨𝗡𝗡𝗬 <a href='https://t.me/bunny2050'>@bunny2050</a>"🔔
             )
         else:
             msg = f"❌ BIN not found or unavailable for <code>{bin_code}</code>."
